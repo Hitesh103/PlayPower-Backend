@@ -75,7 +75,8 @@ class AssignmentController {
         
         for (let i = 0; i < taggedStudents.length; i++) {
           try {
-            const element = await this.user.findById({id : taggedStudents[i]});
+            const element = await this.user.findById(taggedStudents[i]);
+            console.log(element);
             const eMail = element[0].email;
             await sendEmail(eMail, "Assignment", "New Assignment is assigned to you. Please check your dashboard for more details.");
           } catch (error) {

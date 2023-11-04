@@ -1,6 +1,6 @@
-import mysql from "mysql";
+import mysql2 from "mysql2";
 
-const connection = mysql.createConnection({
+const connection = mysql2.createConnection({
   host: "mysql-295a232c-hp5741609-63ed.a.aivencloud.com",
   user: "avnadmin",
   password: "AVNS_hTU7BULxhrRInJKCjCd",

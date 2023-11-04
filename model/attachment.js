@@ -1,46 +1,34 @@
 import Query from "../utills/QueryHelper.js";
 
-/*
-
-	Attachments Table :
-		attachment_id
-		attachment_type - image, url, Video, PDF
-		attachment_data
-
-    attachment_id	attachment_type	attachment_data	
-*/
-
 class Attachment {
   create = async (attachment_id, attachment_data) => {
     try {
       const query = `
         INSERT INTO Attachments (attachment_id, attachment_data)
-        VALUES ("${attachment_id}", "${attachment_data}");
+        VALUES (?, ?);
       `;
-      const data = await Query(query);
+      const data = await Query(query, [attachment_id, attachment_data]);
       return data.affectedRows > 0;
     } catch (error) {
-      console.log(error);
+      console.log(error.message);
       throw error;
     }
   };
 
-  update = async(attachment_id, attachment_data, attachment_type) => {
+  update = async (attachment_id, attachment_data, attachment_type) => {
     try {
       const query = `
         UPDATE Attachments 
-        SET attachment_data = "${attachment_data}", attachment_type = "${attachment_type}" 
-        WHERE attachment_id = "${attachment_id}";
+        SET attachment_data = ?, attachment_type = ? 
+        WHERE attachment_id = ?;
       `;
-      console.log(query);
-      const data = await Query(query);
+      const data = await Query(query, [attachment_data, attachment_type, attachment_id]);
       return data.affectedRows > 0;
     } catch (error) {
-      console.log(error);
+      console.log(error.message);
       throw error;
     }
   }
-
 }
 
 export default Attachment;

@@ -1,0 +1,74 @@
+mvn clean verify sonar:sonar -Dsonar.projectKey=test-scan -Dsonar.host.url=http://localhost:9000 -Dsonar.login=sqp_e58d6a4ba0be386805ee92f9941e69505d23a66d
+
+
+demo jenkins token : sqa_4905ff105417a717b1ca6f6a87113728da5a014f
+
+
+
+pipeline {
+    agent any
+    stages {
+        stage('Git Checkout') {
+            steps {
+                script {
+                    git branch: 'main',
+                        credentialsId: '980b57c3-de2f-4ad3-9b00-f0dab46c2fab',
+                        url: 'https://github.com/rohitchouhan35/spring-boot-jwt.git'
+                    echo "Code Checked-out Successfully from branch: main";
+                }
+            }
+        }
+        
+        stage('Build and Package') {
+            steps {
+                // Intentionally causing the build to fail
+                bat 'mvn clean compile'  // This command will fail intentionally
+                echo "Maven Build and Package Completed Successfully!";
+            }
+        }
+        
+        stage('JUNit Reports') {
+            steps {
+                junit 'target/surefire-reports/*.xml'
+                echo "Publishing JUnit reports"
+            }
+        }
+        
+        stage('Jacoco Reports') {
+            steps {
+                jacoco()
+                echo "Publishing Jacoco Code Coverage Reports";
+            }
+        }
+
+        stage('SonarQube analysis') {
+            steps {
+                // Change this as per your Jenkins Configuration
+                withSonarQubeEnv('server-sonar') {
+                    bat 'mvn package sonar:sonar'
+                }
+            }
+        }
+
+    }
+    post {
+        success {
+            echo 'This will run only if successful'
+        }
+        failure {
+            echo 'This will run only if failed'
+            catchError {
+                mail bcc: '',
+                     body: "<b>Example</b><br>Project: ${env.JOB_NAME} <br>Build Number: ${env.BUILD_NUMBER} <br> URL de build: ${env.BUILD_URL}",
+                     cc: '',
+                     charset: 'UTF-8',
+                     from: 'rochauhan35@gmail.com',
+                     mimeType: 'text/html',
+                     replyTo: 'rochauhan35@gmail.com',
+                     subject: "ERROR CI: Project name -> ${env.JOB_NAME}",
+                     to: "rochauhan35@gmail.com"
+            }
+        }
+    }
+}
+

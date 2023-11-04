@@ -4,14 +4,19 @@ import getRedishData , { setRedishData }from "../utills/RedisHelper.js";
 class Assignment {
   create = async (assignmentData) => {
     try {
-      // assignment_id	description	published_at due_date  user_id	attachment_id
-
       const query = `
-        INSERT INTO Assignments (assignment_id, description, published_at, due_date, user_id, attachment_id, subject) VALUES ( "${assignmentData.assignment_id}" ,"${assignmentData.description}", '${assignmentData.published_at}', "${assignmentData.due_date}","${assignmentData.user_id}", "${assignmentData.attachment_id}","${assignmentData.subject}")
+        INSERT INTO Assignments (assignment_id, description, published_at, due_date, user_id, attachment_id, subject) 
+        VALUES (?, ?, ?, ?, ?, ?, ?);
       `;
-      console.log(query);
-      const data = await Query(query);
-      console.log(data);
+      const data = await Query(query, [
+        assignmentData.assignment_id,
+        assignmentData.description,
+        assignmentData.published_at,
+        assignmentData.due_date,
+        assignmentData.user_id,
+        assignmentData.attachment_id,
+        assignmentData.subject,
+      ]);
       return await this.findById(assignmentData.assignment_id);
     } catch (error) {
       console.log(error.message);
@@ -21,21 +26,10 @@ class Assignment {
 
   update = async (id, assignmentData) => {
     try {
-      let query = `UPDATE Assignments SET `;
-      const updateValues = [];
-
-      for (const key in assignmentData) {
-        if (assignmentData.hasOwnProperty(key)) {
-          updateValues.push(`${key} = "${assignmentData[key]}"`);
-        }
-      }
-
-      query += updateValues.join(", ");
-      query += ` WHERE assignment_id = '${id}'`;
-
-      console.log(query);
-
-      const data = await Query(query);
+      const updateValues = Object.keys(assignmentData).map((key) => `${key} = ?`);
+      const query = `UPDATE Assignments SET ${updateValues.join(", ")} WHERE assignment_id = ?;`;
+      const values = [...Object.values(assignmentData), id];
+      const data = await Query(query, values);
       return data.affectedRows > 0;
     } catch (error) {
       console.log(error.message);
@@ -45,15 +39,11 @@ class Assignment {
 
   delete = async (assignment_id, user_id) => {
     try {
-      const deleteTagsQuery = `
-        DELETE FROM AssignmentStudentTag WHERE assignment_id = "${assignment_id}";
-      `;
-      await Query(deleteTagsQuery); // Delete associated tags first
+      const deleteTagsQuery = `DELETE FROM AssignmentStudentTag WHERE assignment_id = ?;`;
+      await Query(deleteTagsQuery, [assignment_id]);
 
-      const deleteAssignmentQuery = `
-        DELETE FROM Assignments WHERE assignment_id = "${assignment_id}" AND user_id = "${user_id}";
-      `;
-      const data = await Query(deleteAssignmentQuery);
+      const deleteAssignmentQuery = `DELETE FROM Assignments WHERE assignment_id = ? AND user_id = ?;`;
+      const data = await Query(deleteAssignmentQuery, [assignment_id, user_id]);
       return data.affectedRows > 0;
     } catch (error) {
       console.log(error.message);
@@ -63,14 +53,11 @@ class Assignment {
 
   findById = async (assignment_id) => {
     try {
-      const query = `
-        SELECT * FROM Assignments WHERE assignment_id = "${assignment_id}";
-      `;
-
-      const data = await Query(query);
-
+      const query = `SELECT * FROM Assignments WHERE assignment_id = ?;`;
+      const data = await Query(query, [assignment_id]);
       return data;
-    } catch (error) {
+    }
+    catch (error) {
       console.log(error.message);
       throw error;
     }
@@ -81,47 +68,29 @@ class Assignment {
       let key = `teacherFeed:${teacherId}`;
       console.log("Trying to get from Cache");
       let result = await getRedishData(key);
-      if(result){
+      if (result) {
         console.log("Got it from Cache");
         return JSON.parse(result);
-      }else{
-      let query = `
-        SELECT * FROM Assignments WHERE user_id = "${teacherId}";
-      `
-      const data = await Query(query);
-      await setRedishData(key, JSON.stringify(data));
-      console.log("Settting in Cache"); 
-      return data;
-    }
+      } else {
+        let query = `SELECT * FROM Assignments WHERE user_id = ?;`;
+        const data = await Query(query, [teacherId]);
+        await setRedishData(key, JSON.stringify(data));
+        console.log("Setting in Cache");
+        return data;
+      }
     } catch (error) {
       console.log(error.message);
       throw error;
     }
   };
 
-  submit = async(assignment_id,user_id,desc) => {
+  // Modified addScore method
+  addScore = async (score, student_id, assignment_id) => {
     try {
-      let submitQuery = `INSERT INTO SubmitedAssignmets (assignment_id, student_id, submited_time, description)
-      VALUES ("${assignment_id}", "${user_id}", CURRENT_TIMESTAMP, "${desc}");`;
-
-      console.log(submitQuery);
-  
-      const data = await Query(submitQuery);
-      return data.affectedRows > 0;
-    } catch (error) {
-      console.log(error.message);
-      throw error;
-    }
-
-  }
-
-  addScore = async(score,student_id,assignment_id) => {
-    try {
-      let addScoreQuery = `UPDATE SubmitedAssignmets SET score = "${score}" WHERE assignment_id = "${assignment_id}" AND student_id = "${student_id}";`
+      let addScoreQuery = `UPDATE SubmitedAssignmets SET score = "${score}" WHERE assignment_id = "${assignment_id}" AND student_id = "${student_id}";`;
 
       const data = await Query(addScoreQuery);
       return data.affectedRows > 0;
-
     } catch (error) {
       console.log(error.message);
       throw error;
