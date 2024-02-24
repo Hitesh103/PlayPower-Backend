@@ -184,7 +184,6 @@ Authorization: Bearer [YOUR_ACCESS_TOKEN]
 ### Response Example
 
 ```json
-jsonCopy code
 {
   "message": "Assignment Submitted Successfully",
   "data": true,
@@ -285,7 +284,6 @@ jsonCopy code
     - Open a terminal and run the following commands:
     
     ```bash
-    bashCopy code
     sudo apt update
     sudo apt install redis-server
     ```
